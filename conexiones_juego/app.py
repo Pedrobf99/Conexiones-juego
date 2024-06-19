@@ -5,7 +5,7 @@ Created on Thu Jun 13 14:13:03 2024
 @author: pedro
 """
 
-from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask import Flask, render_template, request, redirect, url_for, flash
 import random
 
 import requests
@@ -14,7 +14,6 @@ import datetime
 import json
 
 app = Flask(__name__)
-number_to_guess = random.randint(1, 100)
 
 app.secret_key = 'supersecretkey'  # Required for flashing messages
 
@@ -78,30 +77,15 @@ color=[]
 num_lives=4 
 aciertos=0 
 
-
-def initialize_session():
-    session['grid_data'] = grid_data.copy()
-    session['clicked_rectangles'] = clicked_rectangles
-    session['color'] = color.copy()
-    session['aciertos'] = aciertos
-    session['num_lives'] = num_lives
-    
-@app.before_request
-def before_request():
-    if 'initialized' not in session:
-        initialize_session()
-        session['initialized'] = True
-
 @app.route('/')
 def index():
-    session['num_lives'] = num_lives
-    return render_template('index.html', grid_data=session['grid_data'], clicked_rectangles=session['clicked_rectangles'], num_lives=session['num_lives'], color=session['color'], aciertos=session['aciertos'])
+    global num_lives
+    return render_template('index.html', grid_data=grid_data, clicked_rectangles=clicked_rectangles, num_lives=num_lives, color=color, aciertos=aciertos)
 
 @app.route('/change_color/<int:index>', methods=['POST'])
 def change_color(index):
-    clicked_rectangles = session['clicked_rectangles']
-    grid_data = session['grid_data']
-    
+    global clicked_rectangles
+
     # Toggle color and text
     if index in clicked_rectangles:
         clicked_rectangles.remove(index)
@@ -120,9 +104,9 @@ def change_color(index):
 
 @app.route('/shuffle', methods=['POST'])
 def shuffle():
-        clicked_rectangles = session['clicked_rectangles']
-        grid_data = session['grid_data']
-        aciertos = session['aciertos']
+        global grid_data
+        global clicked_rectangles
+        global aciertos
         
         palabros=[]
         
@@ -153,8 +137,7 @@ def shuffle():
 
 @app.route('/desmarcar', methods=['POST'])
 def desmarcar():        
-        clicked_rectangles = session['clicked_rectangles']
-        grid_data = session['grid_data']
+        global clicked_rectangles
         clicked_rectangles.clear()
         for i in range(16):
             grid_data[i]['color'] = '#f0ece4'
@@ -163,13 +146,13 @@ def desmarcar():
     
 @app.route('/prueba', methods=['POST'])
 def prueba():
-    clicked_rectangles = session['clicked_rectangles']
-    grid_data = session['grid_data']
-    aciertos = session['aciertos']
-    color = session['color']
-    colores = session['colores']
-    num_lives = session['num_lives']
-
+    global clicked_rectangles
+    global color
+    global colores
+    global num_lives
+    global aciertos 
+    global anticolor
+    
     marcadas=[]
     if clicked_rectangles:
         for i in clicked_rectangles:
@@ -245,10 +228,10 @@ def copiar(marcados):
     return compartir
 
 def acierto(marcadas):
-    clicked_rectangles = session['clicked_rectangles']
-    grid_data = session['grid_data']
-    aciertos = session['aciertos']
-    color = session['color']
+    global grid_data
+    global clicked_rectangles
+    global color
+    global aciertos
     
     conexiones_hz=[]
     
