@@ -5,7 +5,7 @@ Created on Thu Jun 13 14:13:03 2024
 @author: pedro
 """
 
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, session
 import random
 
 import requests
@@ -78,15 +78,30 @@ color=[]
 num_lives=4 
 aciertos=0 
 
+
+def initialize_session():
+    session['grid_data'] = grid_data.copy()
+    session['clicked_rectangles'] = clicked_rectangles
+    session['color'] = color.copy()
+    session['aciertos'] = aciertos
+    session['num_lives'] = num_lives
+    
+@app.before_request
+def before_request():
+    if 'initialized' not in session:
+        initialize_session()
+        session['initialized'] = True
+
 @app.route('/')
 def index():
-    global num_lives
-    return render_template('index.html', grid_data=grid_data, clicked_rectangles=clicked_rectangles, num_lives=num_lives, color=color, aciertos=aciertos)
+    session['num_lives'] = num_lives
+    return render_template('index.html', grid_data=session['grid_data'], clicked_rectangles=session['clicked_rectangles'], num_lives=session['num_lives'], color=session['color'], aciertos=session['aciertos'])
 
 @app.route('/change_color/<int:index>', methods=['POST'])
 def change_color(index):
-    global clicked_rectangles
-
+    clicked_rectangles = session['clicked_rectangles']
+    grid_data = session['grid_data']
+    
     # Toggle color and text
     if index in clicked_rectangles:
         clicked_rectangles.remove(index)
@@ -105,9 +120,9 @@ def change_color(index):
 
 @app.route('/shuffle', methods=['POST'])
 def shuffle():
-        global grid_data
-        global clicked_rectangles
-        global aciertos
+        clicked_rectangles = session['clicked_rectangles']
+        grid_data = session['grid_data']
+        aciertos = session['aciertos']
         
         palabros=[]
         
@@ -138,7 +153,8 @@ def shuffle():
 
 @app.route('/desmarcar', methods=['POST'])
 def desmarcar():        
-        global clicked_rectangles
+        clicked_rectangles = session['clicked_rectangles']
+        grid_data = session['grid_data']
         clicked_rectangles.clear()
         for i in range(16):
             grid_data[i]['color'] = '#f0ece4'
@@ -147,13 +163,13 @@ def desmarcar():
     
 @app.route('/prueba', methods=['POST'])
 def prueba():
-    global clicked_rectangles
-    global color
-    global colores
-    global num_lives
-    global aciertos 
-    global anticolor
-    
+    clicked_rectangles = session['clicked_rectangles']
+    grid_data = session['grid_data']
+    aciertos = session['aciertos']
+    color = session['color']
+    colores = session['colores']
+    num_lives = session['num_lives']
+
     marcadas=[]
     if clicked_rectangles:
         for i in clicked_rectangles:
@@ -229,10 +245,10 @@ def copiar(marcados):
     return compartir
 
 def acierto(marcadas):
-    global grid_data
-    global clicked_rectangles
-    global color
-    global aciertos
+    clicked_rectangles = session['clicked_rectangles']
+    grid_data = session['grid_data']
+    aciertos = session['aciertos']
+    color = session['color']
     
     conexiones_hz=[]
     
